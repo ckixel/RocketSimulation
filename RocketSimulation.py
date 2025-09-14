@@ -1,10 +1,7 @@
 
-
 from math import pi, cos, sin, atan2
 from time import sleep
-
 import sys
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,7 +12,6 @@ ypoints_speedY = np.array([])
 ypoints_localSpeedX = np.array([])
 ypoints_localSpeedY = np.array([])
 ypoints_fuel = np.array([])
-
 xpoints_position = np.array([])
 ypoints_position = np.array([])
 zpoints_position = np.array([])
@@ -216,10 +212,8 @@ class CosmicBody:
 		self.airDensity = airDensity
 		self.position = position
 
-Earth = CosmicBody(5.9726 * 10**24, 6_378_000, lambda altitude: getAirDensity(altitude), Vec2(0, -6_378_000))
-
+Earth = CosmicBody(5.9726 * 10**24, 6_378_000, getAirDensity, Vec2(0, -6_378_000))
 Moon = CosmicBody(7.35 * 10**22, 1_738_000, lambda: 0, Vec2(0, 384_400_000))
-
 Sun = CosmicBody(1.989 * 10**30, 700_000_000, lambda: 0, Vec2(0, 1500_000_000_000))
 
 class RocketStage:
@@ -253,24 +247,19 @@ class Rocket:
 		self.thrust = getThrust(system.time)
 
 		EarthDir = (Earth.position - self.position).normalized()
-
 		MoonDir = (Moon.position - self.position).normalized()
 
 		gravityForce = EarthDir * G * self.mass() * Earth.mass / (Vec2.distance(Earth.position, self.position) ** 2)
-
 		dragForce = self.speed.normalized().negative() * Earth.airDensity(self.altitude) * (self.speed ** 2) * self.cd * self.area / 2
 
 		self.speed += ((EarthDir.negative() * self.thrust * (self.stages[-1].T if self.stages and self.stages[-1].fuelMass > 0 else 0)).rotated(-self.angle * pi / 180) + gravityForce + dragForce) * deltaTime / self.mass()
-
 		self.position += self.speed * deltaTime
-
 		self.altitude = Vec2.distance(self.position, Earth.position) - Earth.radius
 
 		if self.stages and self.stages[-1].fuelMass > 0:
 			self.stages[-1].fuelMass -= self.stages[-1].fuelConsumtion * deltaTime * self.thrust
 		elif self.stages and self.stages[-1].fuelMass < 0:
 			self.stages[-1].fuelMass = 0
-	
 		if len(self.stages) > 1 and self.stages[-1].fuelMass <= 0: self.stages = self.stages[:-1]
 		
 	def printReport(self):
@@ -300,10 +289,8 @@ class System:
 		if not self.active: return False
 
 		self.rocket.update(self.deltaTime)
-
 		self.iterator += 1
 		if self.iterator >= self.maxIterator: return False
-
 		if self.iterator % self.dataCollectionIterations == 0:
 			self.collectData()
 
@@ -314,12 +301,12 @@ class System:
 	def collectData(self):
 		global xpoints, ypoints_altitude, ypoints_speedX, ypoints_speedY, ypoints_fuel, xpoints_position, ypoints_position, zpoints_position, ypoints_localSpeedX, ypoints_localSpeedY
 		rocket = self.rocket
+		dir = rocket.position - Earth.position
+		angle = atan2(dir.y, dir.x)
 		xpoints = np.append(xpoints, [self.time])
 		ypoints_altitude = np.append(ypoints_altitude, [rocket.altitude])
 		ypoints_speedX = np.append(ypoints_speedX, [rocket.speed.x])
 		ypoints_speedY = np.append(ypoints_speedY, [rocket.speed.y])
-		dir = self.rocket.position - Earth.position
-		angle = atan2(dir.y, dir.x)
 		localSpeed = self.rocket.speed.rotated(-angle + pi/2)
 		ypoints_localSpeedX = np.append(ypoints_localSpeedX, [localSpeed.x])
 		ypoints_localSpeedY = np.append(ypoints_localSpeedY, [localSpeed.y])
@@ -393,4 +380,3 @@ plt.colorbar()
 plt.title("Scene")
 
 plt.show()
-
