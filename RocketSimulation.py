@@ -1,6 +1,6 @@
 
 from math import pi, cos, sin, atan2
-from time import sleep
+from __future__ import annotations
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
@@ -185,19 +185,19 @@ class Vec2:
 	def length(self) -> float:
 		return (self.x ** 2 + self.y ** 2) ** .5
 	
-	def normalized(self):
+	def normalized(self) -> Vec2:
 		d = self.length()
 		if d == 0: return Vec2.zero()
 		return Vec2(self.x / d, self.y / d)
 
-	def negative(self):
+	def negative(self) -> Vec2:
 		return Vec2(-self.x, -self.y)
 	
-	def rotated(self, angle: int):
+	def rotated(self, angle: float) -> Vec2:
 		return Vec2(self.x * cos(angle) - self.y * sin(angle), self.x * sin(angle) + self.y * cos(angle))
 	
 	@staticmethod
-	def zero():
+	def zero() -> Vec2:
 		return Vec2(0, 0)
 
 	@staticmethod
@@ -380,3 +380,4 @@ plt.colorbar()
 plt.title("Scene")
 
 plt.show()
+
