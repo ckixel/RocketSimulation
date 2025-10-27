@@ -9,7 +9,7 @@ from scipy.optimize import minimize
 startTime = time.time()
 
 def main(deltaTime = 1, simulationTime = 1e4, dataCollectionInterval = 10, showGraph: bool = False, printOutput: bool = False, maxDataTime: float = 1e10, angles = [0, 10, 25, 45, 70, 85, 90, 100]):
-    result = subprocess.run(["/Programming/RocketSimulation.exe"], input=f'{deltaTime} {simulationTime} {dataCollectionInterval} 1\n{" ".join(map(str, angles))} \n0', capture_output=True, text=True)
+    result = subprocess.run(["/home/alex/Documents/programming/a.out"], input=f'{deltaTime} {simulationTime} {dataCollectionInterval} 1\n{" ".join(map(str, angles))} \n0', capture_output=True, text=True)
 
     sts = result.stdout
 
@@ -41,6 +41,8 @@ def main(deltaTime = 1, simulationTime = 1e4, dataCollectionInterval = 10, showG
 
         for i, el in enumerate(tt):
             if el == "Time:":
+                if np.double(tt[i + 1]) > maxDataTime:
+                    break
                 times = np.append(times, np.double(tt[i + 1]))
             if el == "Position:":
                 xs = np.append(xs, np.double(tt[i + 2][:-1] if tt[i + 2][-1] == ',' else tt[i + 2]))
@@ -72,7 +74,7 @@ def f(out):
     res = 0
     if not out["success"]: res += 1e20
     res += ((out["minMaxAltitude"][1] - out["minMaxAltitude"][0]) / 1e2) ** 2
-    res += (1e6 / out["minMaxAltitude"][1]) ** 2
+    res += (1e6 / max(out["minMaxAltitude"][1], 10)) ** 2
     return res
 
 def ff(angles):
@@ -110,8 +112,16 @@ def ffnew(angles):
 # main(printOutput=True, showGraph=True, dataCollectionInterval=10, maxDataTime=1000, angles=[-0.0, -0.76, 2.15, 44.67, 67.86, 178.71, -95.39, 213.93])
 # main(printOutput=True, showGraph=True, dataCollectionInterval=10, maxDataTime=1000, angles=[0.05, -41.54, 3.71, 117.19, 47.51, 152.01, -316.94, -1267.4])
 # main(printOutput=True, showGraph=True, dataCollectionInterval=10, maxDataTime=1000, angles=[0.0, -0.76, 2.19, 44.71, 67.88, 178.7, -95.23, 216.33])
-main(printOutput=True, showGraph=True, dataCollectionInterval=10, maxDataTime=1000, angles=[0.0, -0.76, 2.2, 44.73, 67.87, 178.7, -96.69, 218.92])
 
+# main(printOutput=True, showGraph=True, dataCollectionInterval=10, maxDataTime=1000, angles=[0.0, -0.76, 2.2, 44.73, 67.87, 178.7, -96.69, 218.92])
+
+# main(printOutput=True, showGraph=True, dataCollectionInterval=10, simulationTime=25000, angles=[0.0, 15.76, 20.2, 44.73, 77.87, 90.7, 107, 140])
+
+main(printOutput=True, showGraph=True, deltaTime=.1, dataCollectionInterval=20, simulationTime=25000, maxDataTime=1000, angles=[0, 20, 50, 70, 90,120, 90, 90])
+
+# [0.0, 15.9, 20.35, 45.2, 76.7, 90.72, 106.57, 140.04]
+# [-0.0, 16.05, 20.74, 46.01, 76.97, 91.56, 107.21, 142.27]
+# [0.0, 16.09, 20.83, 46.22, 76.14, 91.83, 106.8, 142.27]
 
 # --- Check angles' error ---
 # out = main(angles=[0.0, 8.17, 19.95, 39.72, 45.87, 67.37, 109.33, 137.88])
@@ -119,8 +129,8 @@ main(printOutput=True, showGraph=True, dataCollectionInterval=10, maxDataTime=10
 
 
 # --- Angles finding method ---
-def findAnglesMethod(angles, fun=ff, iters=100):
-    return minimize(fun, np.array(angles), method="Nelder-Mead", options={"maxiter": iters, "disp": True})
+def findAnglesMethod(angles, func=ff, iters=100):
+    return minimize(func, np.array(angles), method="Nelder-Mead", options={"maxiter": iters, "disp": True})
 
 
 # --- Test angles finding method ---
@@ -136,9 +146,9 @@ def testFindAnglesMethod(angles):
     return res
 
 
-def findAngles():
+def findAngles(angles):
     #res = testFindAnglesMethod([0.0, 50.0, 90.0, 100.0, 110.0, 110.0, 90.0, 90.0])
-    res = findAnglesMethod([0.0, -0.76, 2.19, 44.71, 67.88, 178.7, -95.23, 216.33], ff, 200)
+    res = findAnglesMethod(angles, ff, 400)
     angles = list(map(lambda x: float(f'{float(x):5.2f}') if x != '' else '', (str(res.x)[2:] if str(res.x)[1] == " " else str(res.x)).replace("[", "").replace("]", "").replace("  ", " ").split(" ")))
     print("Raw angles:", res.x)
     print("Angles:", angles)
@@ -146,7 +156,7 @@ def findAngles():
     main(maxDataTime=10, angles=angles, printOutput=True)
 
 # --- No comments ---
-# findAngles()
+# findAngles([0, 5, 10, 80, 90, 90, 90, 100])
 
 print("Time:", time.time() - startTime)
 
